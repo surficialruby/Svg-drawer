@@ -1,5 +1,6 @@
-<svg width="800.0000000000001" height="600" xmlns="http://www.w3.org/2000/svg">
+<svg width="800.0000000000001" height="600" xmlns="http://www.w3.org/2000/svg" xml:space="preserve">
  <g>
+  <rect x="0" width="809" height="600" style="fill: rgb(255, 255, 255);"/>
   <title>Layer 1</title>
   <line stroke-width="3" x1="17" x2="17" stroke-linecap="undefined" stroke-linejoin="undefined" id="svg_2" y2="585.5" y1="20" stroke="#000" fill="none"/>
   <line stroke-width="3" stroke-linecap="undefined" stroke-linejoin="undefined" id="svg_3" y2="584" x2="770" y1="584.37494" x1="14.99995" stroke="#000" fill="none"/>

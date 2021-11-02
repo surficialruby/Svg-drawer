@@ -95,33 +95,41 @@ class PresetImg(QLabel):
             fontSize = 7.8
             self.svg.getroot()[0][2][1].text = self.textEdit.toPlainText()
             plainText = self.textEdit.toPlainText().splitlines()
+            print(plainText)
             svgTextArr = []
             width = float(self.svg.getroot()[0][2][0].get('width'))
             for idx, line in enumerate(plainText):
+                print(line)
                 if self.textwidth(line, fontSize) > width:
                     words = line.split(' ')
                     newLine = []
                     tempLine = ''
                     i = 0
                     for word in words:
-                        if self.textwidth(tempLine + ' ' + word, fontSize) < width:
+                        print('word: '+word)
+                        if self.textwidth(tempLine + ' ' + word, fontSize) <= width:
+                            print('word <: '+word)
                             tempLine += ' ' + word
-                        if self.textwidth(word, fontSize) > width:
-                            if len(tempLine) > 0: newLine.append(tempLine)
+                        else:
+                            i+=1
+                            print('word >: '+word)
+                            if len(tempLine) > 0: 
+                                newLine.append(tempLine)
                             for i in range(math.ceil(self.textwidth(word, fontSize)/width)):
                                 tempLine = ''
                                 i+=1
-                                splitWord = word[0:math.floor(width/(self.textwidth(word, fontSize) / len(word)))]
-                                if len(newLine) > 0: 
-                                    lineLen = self.textwidth(newLine[len(newLine)-1] + ' ' + splitWord, fontSize)
-                                if len(newLine) > 0 and lineLen <= width: 
-                                    newLine[len(newLine)-1] + ' ' + splitWord
-                                else:
-                                    newLine.append(word[0:math.floor(width/(self.textwidth(word, fontSize) / len(word)))])
-                                word = word[math.floor(width/(self.textwidth(word, fontSize) / len(word)))+1:]
+                                if len(word) > 0:
+                                    splitWord = word[0:math.floor(width/(self.textwidth(word, fontSize) / len(word)))]
+                                    if len(newLine) > 0: 
+                                        lineLen = self.textwidth(newLine[len(newLine)-1] + ' ' + splitWord, fontSize)
+                                    if len(newLine) > 0 and lineLen <= width: 
+                                        newLine[len(newLine)-1] + ' ' + splitWord
+                                    else:
+                                        newLine.append(word[0:math.floor(width/(self.textwidth(word, fontSize) / len(word)))])
+                                    word = word[math.floor(width/(self.textwidth(word, fontSize) / len(word)))+1:]
                                 i+=1
-                        else:
-                            i+=1
+                    if len(tempLine) > 0: 
+                        newLine.append(tempLine)
                     for line_ in newLine:
                         svgTextArr.append(line_)
                 else:

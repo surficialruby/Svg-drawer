@@ -90,7 +90,7 @@ class window(QMainWindow):
       self.canvas.setStyleSheet('border: 1px solid black;')
 
       #Load background
-      self.bg = canvas.Background(self.canvas,'bg.svg')
+      self.bg = canvas.Background(self.canvas,'background.svg')
       oc.addBG(self.bg)
 
    def showNPW(self):

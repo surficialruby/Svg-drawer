@@ -3,6 +3,11 @@ import configparser
 from firebase_admin import db
 from . import objectController as oc
 
+def fbGetMaps():
+    ref = db.reference('maps/')
+    maps = ref.get()
+    return maps
+
 def fbSave():
     config = configparser.ConfigParser()
     config.read('config\settings.ini')

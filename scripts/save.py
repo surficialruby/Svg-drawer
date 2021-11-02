@@ -43,7 +43,7 @@ def saveInit():
             'fillColor': config['save']['fillColor'],
             'strokeColor': config['save']['strokeColor']
         })
-    # Save svg image
+    # Save svg image xml:space="preserve"
     background = transform.fromfile(oc.bg.fileName)
     background.append([s['root'] for s in imgFilesData.values()])
     background.save('out/'+ config['save']['name'] +'.svg')
@@ -57,7 +57,6 @@ def save():
     saveInit()
     # Push json map to Firebase
     fbSave()
-
 
 def saveAs():
     pass
