@@ -26,7 +26,7 @@ def saveInit():
         y = int(imgFilesData[idx]['file'].find('''.//*[@id='checkbox']''').get('y'))
         width= int(imgFilesData[idx]['file'].find('''.//*[@id='checkbox']''').get('width'))
         height = int(imgFilesData[idx]['file'].find('''.//*[@id='checkbox']''').get('height'))
-        #imgFilesData[idx]['file'].find('''.//*[@id='checkbox']''').set('id','checkbox_'+str(idx))
+        imgFilesData[idx]['file'].getroot()[0].set('id','checkbox_'+str(idx))
         imgFilesData[idx]['root'] = transform.fromstring(ET.tostring(imgFilesData[idx]['file'].getroot(),'unicode')).getroot()
         imgFilesData[idx]['root'].moveto(img.pos().x(), img.pos().y())
         if not 'areas' in mapData['MAP']: mapData['MAP']['areas'] = []
@@ -44,9 +44,10 @@ def saveInit():
             'strokeColor': config['save']['strokeColor']
         })
     # Save svg image xml:space="preserve"
-    background = transform.fromfile(oc.bg.fileName)
+    background = transform.fromfile(oc.bg.filename)
     background.append([s['root'] for s in imgFilesData.values()])
-    background.save('out/'+ config['save']['name'] +'.svg')
+    background.save('out/'+ config['save']['name'] +'.svg','utf-8')
+
     # Save json map file
     with open('out/'+ config['save']['name'] +'.json', 'w', encoding='utf-8') as f:
         mapJsonPretty = json.loads(json.dumps(mapData))

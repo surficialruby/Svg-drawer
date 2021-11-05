@@ -4,18 +4,18 @@ import math
 import xml.etree.ElementTree as ET
 from PyQt5.QtWidgets import QLabel, QTextEdit
 from PyQt5.QtGui import QPixmap, QMouseEvent
-from PyQt5.QtCore import QEvent, Qt, QTimer, pyqtSlot
+from PyQt5.QtCore import Qt, QTimer
 from . import objectController as oc
 
 class Background(QLabel):
-    fileName = ''
+    filename = ''
     orig_pos = {'x':0,'y':0}
     move_orig_pos = {'x':0,'y':0}
 
     def __init__(self, parent, pixmap = None):
         super().__init__(parent)
         self._parent = parent
-        self.fileName = pixmap
+        self.filename = pixmap
         pixmap = QPixmap(pixmap)
         self.setPixmap(pixmap)
         self.resize(pixmap.width(),pixmap.height())
@@ -30,7 +30,7 @@ class Background(QLabel):
 
 class PresetImg(QLabel):
     selected = False
-    fileName = ''
+    filename = ''
     parentEle = None
     orig_pos = {'x':0,'y':0}
     click_pos = {'x':0,'y':0}
@@ -43,7 +43,7 @@ class PresetImg(QLabel):
     def __init__(self, parent, pixmap = None):
         super().__init__(parent)
         self.setStyleSheet('border: none;')
-        self.fileName = pixmap
+        self.filename = pixmap
         self.svg = ET.parse(pixmap)
         self.parentEle = parent
         pixmap = QPixmap(pixmap)
@@ -90,29 +90,25 @@ class PresetImg(QLabel):
             self.textEdit.show()
             self.textEdit.setFocus()
 
+    # Get textarea plain text and split it to rows to fit checkbox width
     def saveText(self):
         if hasattr(self, 'textEdit'):
             fontSize = 7.8
             self.svg.getroot()[0][2][1].text = self.textEdit.toPlainText()
             plainText = self.textEdit.toPlainText().splitlines()
-            print(plainText)
             svgTextArr = []
             width = float(self.svg.getroot()[0][2][0].get('width'))
             for idx, line in enumerate(plainText):
-                print(line)
                 if self.textwidth(line, fontSize) > width:
                     words = line.split(' ')
                     newLine = []
                     tempLine = ''
                     i = 0
                     for word in words:
-                        print('word: '+word)
                         if self.textwidth(tempLine + ' ' + word, fontSize) <= width:
-                            print('word <: '+word)
                             tempLine += ' ' + word
                         else:
                             i+=1
-                            print('word >: '+word)
                             if len(tempLine) > 0: 
                                 newLine.append(tempLine)
                             for i in range(math.ceil(self.textwidth(word, fontSize)/width)):

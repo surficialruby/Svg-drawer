@@ -1,5 +1,6 @@
 elements = []
 bg = ''
+preset = ''
 projectName = ''
 savedID = ''
 
@@ -17,7 +18,12 @@ def add(obj):
 def addBG(obj):
    global bg
    bg = obj
-   return bg.fileName
+   return bg.filename
+
+def addPreset(name):
+   global preset
+   preset = name
+   return preset
 
 def select():
    pass

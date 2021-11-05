@@ -1,11 +1,12 @@
 import configparser
 from PyQt5.QtCore import QRect, pyqtSignal
 from PyQt5.QtGui import QMoveEvent
-from PyQt5.QtWidgets import QFrame, QGraphicsOpacityEffect, QLineEdit, QPushButton, QMainWindow, QAction, QFileDialog, QTextEdit, QWidget
+from PyQt5.QtWidgets import QFrame, QGraphicsOpacityEffect, QLabel, QLineEdit, QListWidget, QPushButton, QMainWindow, QAction, QFileDialog
 from scripts import (
     canvas, 
     save, 
     objectController as oc,
+    Firebase as fb,
 )
 
 class window(QMainWindow):
@@ -31,13 +32,13 @@ class window(QMainWindow):
       newAction = QAction('&New', self)        
       newAction.setShortcut('Ctrl+N')
       newAction.setStatusTip('New document')
-      newAction.triggered.connect(lambda:self.showNPW())
+      newAction.triggered.connect(lambda:self.showNPM())
 
       # Create new action
       openAction = QAction('&Open', self)        
       openAction.setShortcut('Ctrl+O')
       openAction.setStatusTip('Open document')
-      #openAction.triggered.connect()
+      openAction.triggered.connect(lambda:self.showLPM())
 
       # Create exit action
       exitAction = QAction('&save', self)        
@@ -60,7 +61,7 @@ class window(QMainWindow):
       #Add new preset img
       self.add_btn = QPushButton('Add',self.layout)
       self.add_btn.resize(50,40)
-      self.add_btn.clicked.connect(lambda:self.add_preset('preset_checkbox.svg'))
+      self.add_btn.clicked.connect(lambda:self.add_preset())
       
       '''
       #Edit selector
@@ -89,15 +90,53 @@ class window(QMainWindow):
       self.canvas.resize(self.frameGeometry().width()-50,self.frameGeometry().height()-20)
       self.canvas.setStyleSheet('border: 1px solid black;')
 
-      #Load background
-      self.bg = canvas.Background(self.canvas,'background.svg')
+      #Load empty background
+      self.bg = canvas.Background(self.canvas)
       oc.addBG(self.bg)
 
-   def showNPW(self):
-      self.modal = QFrame(self)
-      self.modal.resize(int(self.settings['display']['width']),int(self.settings['display']['height']))
+   def initNewProject(self):
+      if self.bgName.text() != '' and self.cbName.text() != '' and self.projectName.text() != '':
+         oc.updateID('')
 
-      self.overlay = QFrame(self.modal)
+         # Load background
+         self.bg = canvas.Background(self.canvas,self.bgName.text())
+         oc.addBG(self.bg)
+         self.bg.show()
+         # Add preset location
+         oc.addPreset(self.cbName.text())
+         
+         self.settings['save']['url'] = self.imgURL.text()
+         self.settings['save']['name'] = self.projectName.text()
+         with open('config/settings.ini', 'w') as configfile:    # save
+            self.settings.write(configfile)
+
+         self.modalNPM.close()
+
+   def initLoadedProject(self):
+      if self.bgName.text() != '':
+         if self.listwidget.currentItem():
+            selectedProject = self.projects[self.listwidget.currentItem().text()]
+            oc.updateID(selectedProject)
+         
+         # Load background
+         self.bg = canvas.Background(self.canvas,self.bgName.text())
+         oc.addBG(self.bg)
+         self.bg.show()
+         # Add preset location
+         oc.addPreset(self.cbName.text())
+         
+         self.settings['save']['url'] = selectedProject['URL']
+         self.settings['save']['name'] = selectedProject['MAP']['name']
+         with open('config/settings.ini', 'w') as configfile:    # save
+            self.settings.write(configfile)
+
+         self.modalLPM.close()
+
+   def showNPM(self):
+      self.modalNPM = QFrame(self)
+      self.modalNPM.resize(int(self.settings['display']['width']),int(self.settings['display']['height']))
+
+      self.overlay = QFrame(self.modalNPM)
       self.overlay.resize(int(self.settings['display']['width']),int(self.settings['display']['height']))
       self.overlay.move(0,20)
       self.overlay.setStyleSheet('background-color:#36373d;') 
@@ -105,48 +144,131 @@ class window(QMainWindow):
       self.opacity_effect.setOpacity(0.3)
       self.overlay.setGraphicsEffect(self.opacity_effect)
 
-      self.front = QFrame(self.modal)
+      self.front = QFrame(self.modalNPM)
       self.front.resize(300,480)
       self.front.move(int(self.settings['display']['width'])/2-self.front.frameGeometry().width()/2,int(self.settings['display']['height'])/2-self.front.frameGeometry().height()/2)
       self.front.setStyleSheet('background-color:white;') 
 
-      frontCenter = self.front.frameGeometry().width()/2
-      self.bgName = QTextEdit(self.front)
+      frontCenterW = self.front.frameGeometry().width()/2
+
+      self.projectNameLabel = QLabel(self.front)
+      self.projectNameLabel.setText('Project name')
+      self.projectNameLabel.move(frontCenterW-self.projectNameLabel.frameGeometry().width()/2-35,30)
+      self.projectName = QLineEdit(self.front)
+      self.projectName.move(frontCenterW-self.projectName.frameGeometry().width()/2-35,50)
+
+      self.bgNameLabel = QLabel(self.front)
+      self.bgNameLabel.setText('Background')
+      self.bgNameLabel.move(frontCenterW-self.bgNameLabel.frameGeometry().width()/2-35,80)
+      self.bgName = QLineEdit(self.front)
       self.bgName.setReadOnly(True)
-      self.bgName.move(frontCenter-self.bgName.frameGeometry().width()/2,20)
+      self.bgName.move(frontCenterW-self.bgName.frameGeometry().width()/2-35,100)
+      self.bgSelect = QPushButton('browse',self.front)
+      self.bgSelect.resize(50,20)
+      self.bgSelect.move(frontCenterW-self.bgSelect.frameGeometry().width()/2+75,100)
+      self.bgSelect.clicked.connect(lambda:self.bgName.setText(self.openfilenameDialog()))
 
-      self.bgSelect = QPushButton('select',self.front)
-      self.bgSelect.resize(50,40)
-      self.bgSelect.clicked.connect(lambda:self.openFileNameDialog())
-      self.bgSelect.move(frontCenter-self.bgSelect.frameGeometry().width()/2,20)
-
+      self.cbNameLabel = QLabel(self.front)
+      self.cbNameLabel.setText('Checkbox preset')
+      self.cbNameLabel.move(frontCenterW-self.cbNameLabel.frameGeometry().width()/2-35,130)
       self.cbName = QLineEdit(self.front)
       self.cbName.setReadOnly(True)
-      self.cbName.move(frontCenter-self.cbName.frameGeometry().width()/2,20)
+      self.cbName.move(frontCenterW-self.cbName.frameGeometry().width()/2-35,150)
+      self.cbSelect = QPushButton('browse',self.front)
+      self.cbSelect.resize(50,20)
+      self.cbSelect.move(frontCenterW-self.cbSelect.frameGeometry().width()/2+75,150)
+      self.cbSelect.clicked.connect(lambda:self.cbName.setText(self.openfilenameDialog()))
 
-      self.cbSelect = QPushButton('select',self.front)
-      self.cbSelect.resize(50,40)
-      self.cbSelect.clicked.connect(lambda:self.openFileNameDialog())
-      self.cbSelect.move(frontCenter-self.cbSelect.frameGeometry().width()/2,20)
+      self.imgUrlLabel = QLabel(self.front)
+      self.imgUrlLabel.setText('Image url')
+      self.imgUrlLabel.move(frontCenterW-self.projectNameLabel.frameGeometry().width()/2-35,180)
+      self.imgURL = QLineEdit(self.front)
+      self.imgURL.move(frontCenterW-self.projectName.frameGeometry().width()/2-35,200)
 
       self.okBtn = QPushButton('Ok',self.front)
       self.okBtn.resize(50,40)
-      self.okBtn.clicked.connect(lambda:self.modal.close())
-      self.okBtn.move(frontCenter-self.okBtn.frameGeometry().width()/2,20)
+      self.okBtn.clicked.connect(lambda:self.initNewProject())
+      self.okBtn.move(frontCenterW-self.okBtn.frameGeometry().width()/2-50,self.front.frameGeometry().height()-self.okBtn.frameGeometry().height()-20)
 
       self.cancelBtn = QPushButton('Cancel',self.front)
       self.cancelBtn.resize(50,40)
-      self.cancelBtn.clicked.connect(lambda:self.modal.close())
-      self.cancelBtn.move(frontCenter-self.cancelBtn.frameGeometry().width()/2,20)
+      self.cancelBtn.clicked.connect(lambda:self.modalNPM.close())
+      self.cancelBtn.move(frontCenterW-self.cancelBtn.frameGeometry().width()/2+50,self.front.frameGeometry().height()-self.cancelBtn.frameGeometry().height()-20)
 
-      self.modal.show()
-   
-   def openFileNameDialog(self):
+      self.modalNPM.show()
+
+   def showLPM(self):
+      self.modalLPM = QFrame(self)
+      self.modalLPM.resize(int(self.settings['display']['width']),int(self.settings['display']['height']))
+
+      self.overlay = QFrame(self.modalLPM)
+      self.overlay.resize(int(self.settings['display']['width']),int(self.settings['display']['height']))
+      self.overlay.move(0,20)
+      self.overlay.setStyleSheet('background-color:#36373d;') 
+      self.opacity_effect = QGraphicsOpacityEffect()
+      self.opacity_effect.setOpacity(0.3)
+      self.overlay.setGraphicsEffect(self.opacity_effect)
+
+      self.front = QFrame(self.modalLPM)
+      self.front.resize(300,480)
+      self.front.move(int(self.settings['display']['width'])/2-self.front.frameGeometry().width()/2,int(self.settings['display']['height'])/2-self.front.frameGeometry().height()/2)
+      self.front.setStyleSheet('background-color:white;') 
+
+      frontCenterW = self.front.frameGeometry().width()/2
+
+      self.mapJsonLabel = QLabel(self.front)
+      self.mapJsonLabel.setText('Map json')
+      self.mapJsonLabel.move(frontCenterW-self.mapJsonLabel.frameGeometry().width()/2-35,20)
+      self.listwidget = QListWidget(self.front)
+      self.listwidget.resize(200,150)
+      self.listwidget.move(frontCenterW-self.listwidget.frameGeometry().width()/2+10,40)
+
+      self.maps = fb.fbGetMaps()
+      self.projects = {}
+      for idx, map in enumerate(self.maps):
+         self.projects[self.maps[map]['MAP']['name']] = self.maps[map]
+         self.listwidget.insertItem(idx, self.maps[map]['MAP']['name'])
+
+      self.bgNameLabel = QLabel(self.front)
+      self.bgNameLabel.setText('SVG image')
+      self.bgNameLabel.move(frontCenterW-self.bgNameLabel.frameGeometry().width()/2-35,200)
+      self.bgName = QLineEdit(self.front)
+      self.bgName.setReadOnly(True)
+      self.bgName.move(frontCenterW-self.bgName.frameGeometry().width()/2-35,220)
+      self.bgSelect = QPushButton('browse',self.front)
+      self.bgSelect.resize(50,20)
+      self.bgSelect.move(frontCenterW-self.bgSelect.frameGeometry().width()/2+75,220)
+      self.bgSelect.clicked.connect(lambda:self.bgName.setText(self.openfilenameDialog()))
+
+      self.cbNameLabel = QLabel(self.front)
+      self.cbNameLabel.setText('Checkbox preset')
+      self.cbNameLabel.move(frontCenterW-self.cbNameLabel.frameGeometry().width()/2-35,250)
+      self.cbName = QLineEdit(self.front)
+      self.cbName.setReadOnly(True)
+      self.cbName.move(frontCenterW-self.cbName.frameGeometry().width()/2-35,270)
+      self.cbSelect = QPushButton('browse',self.front)
+      self.cbSelect.resize(50,20)
+      self.cbSelect.move(frontCenterW-self.cbSelect.frameGeometry().width()/2+75,270)
+      self.cbSelect.clicked.connect(lambda:self.cbName.setText(self.openfilenameDialog()))
+
+      self.okBtn = QPushButton('Ok',self.front)
+      self.okBtn.resize(50,40)
+      self.okBtn.clicked.connect(lambda:self.initLoadedProject())
+      self.okBtn.move(frontCenterW-self.okBtn.frameGeometry().width()/2-50,self.front.frameGeometry().height()-self.okBtn.frameGeometry().height()-20)
+
+      self.cancelBtn = QPushButton('Cancel',self.front)
+      self.cancelBtn.resize(50,40)
+      self.cancelBtn.clicked.connect(lambda:self.modalLPM.close())
+      self.cancelBtn.move(frontCenterW-self.cancelBtn.frameGeometry().width()/2+50,self.front.frameGeometry().height()-self.cancelBtn.frameGeometry().height()-20)
+
+      self.modalLPM.show()
+
+   def openfilenameDialog(self):
       options = QFileDialog.Options()
       options |= QFileDialog.DontUseNativeDialog
-      fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","SVG Files (*.svg);;All Files (*)", options=options)
-      if fileName:
-         print(fileName)
+      filename, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","SVG Files (*.svg);;All Files (*)", options=options)
+      if filename:
+         return filename
 
    def resizeEvent(self, event):
       self.resized.emit()
@@ -156,47 +278,15 @@ class window(QMainWindow):
       self.canvas.resize(self.frameGeometry().width()-50,self.frameGeometry().height()-20)
       self.bg.origPos()
 
-   def add_preset(self,preset):
-      oc.deselectAll()
-      oc.add(canvas.PresetImg(oc.bg,preset))
+   def add_preset(self):
+      if oc.preset != '':
+         oc.deselectAll()
+         oc.add(canvas.PresetImg(oc.bg,oc.preset))
 
    def save(self):
-      save.save()
+      if oc.bg.filename != None:
+         save.save()
 
    def mousePressEvent(self, event: QMoveEvent):
       # Deselect selected checkbox elements
       oc.deselectAll()
-
-class NewProjectWindow(QWidget):
-   switch_window = pyqtSignal()
-
-   def __init__(self, parent=None):
-      super(NewProjectWindow, self).__init__(parent)
-      self.width = 300
-      self.height = 480
-      self.initUI()
-   
-   def initUI(self):
-      self.setWindowTitle(self.title)
-      self.resize(self.width, self.height)
-
-      self.bg = QPushButton('select', self)
-      self.bg.resize(50,40)
-      self.bg.move(0,45)
-      self.bg.clicked.connect(lambda:self.openFileNameDialog())
-
-      self.cb = QPushButton('select', self)
-      self.cb.resize(50,40)
-      self.cb.move(0,45)
-      self.cb.clicked.connect(lambda:self.openFileNameDialog())
-
-      #self.openFileNameDialog()
-
-   def openFileNameDialog(self):
-      options = QFileDialog.Options()
-      options |= QFileDialog.DontUseNativeDialog
-      fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","SVG Files (*.svg);;All Files (*)", options=options)
-      if fileName:
-         print(fileName)
-
-
