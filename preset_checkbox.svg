@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <svg viewBox="0 0 200 100">
   <g transform="matrix(1, 0, 0, 1, 0, 0)">
-    <rect x="0" y="0" width="200" height="100" style="fill: rgb(216, 216, 216);" fill-opacity="0.0"/>
     <rect id="checkbox" x="5" y="5" width="20" height="20" style="fill: rgb(0, 0, 255);"/>
     <rect x="7" y="7" width="16" height="16" style="fill: rgb(255, 255, 255);"/>
     <g id="textarea" transform="matrix(2, 0, 0, 2, -32, 5)" style="">

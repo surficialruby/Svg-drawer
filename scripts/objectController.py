@@ -31,3 +31,7 @@ def select():
 def deselectAll():
    for ele in elements:
       ele.deselect()
+
+def delete(obj):
+   if obj in elements:
+      elements.remove(obj)

@@ -16,7 +16,8 @@ def saveInit():
 
     if not os.path.isdir('out'): os.mkdir('out')
     mapData = {}
-    mapData['URL'] = config['save']['URL'] + 'output.svg'
+    if oc.savedID: mapData['URL'] = config['save']['URL']
+    else: mapData['URL'] = config['save']['URL'] + config['save']['name'] + '.svg'
     mapData['MAP'] = {}
     mapData['MAP']['name'] = config['save']['name']
     # Get checkboxes and add create map area
@@ -44,7 +45,8 @@ def saveInit():
             'strokeColor': config['save']['strokeColor']
         })
     # Save svg image xml:space="preserve"
-    background = transform.fromfile(oc.bg.filename)
+    svg = oc.bg.svg.getroot()
+    background = transform.fromstring(ET.tostring(svg).decode())
     background.append([s['root'] for s in imgFilesData.values()])
     background.save('out/'+ config['save']['name'] +'.svg','utf-8')
 

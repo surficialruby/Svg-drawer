@@ -3,7 +3,7 @@ import configparser
 from firebase_admin import db
 from . import objectController as oc
 
-def fbGetMaps():
+def fbGetMaps() -> object:
     ref = db.reference('maps/')
     maps = ref.get()
     return maps
@@ -27,6 +27,3 @@ def fbUpdate(ref, config):
     with open('out/'+ config['save']['name'] +'.json', 'r') as f:
         file_contents = json.load(f)
     ref.child(oc.savedID).set(file_contents)
-
-def fbLoad():
-    pass

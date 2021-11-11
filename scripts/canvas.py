@@ -1,21 +1,28 @@
 import os
 import cairo
 import math
+import re
 import xml.etree.ElementTree as ET
-from PyQt5.QtWidgets import QLabel, QTextEdit
+from svgutils import transform
+from PyQt5.QtWidgets import QLabel, QPushButton, QTextEdit
 from PyQt5.QtGui import QPixmap, QMouseEvent
 from PyQt5.QtCore import Qt, QTimer
 from . import objectController as oc
+from . import canvas
 
 class Background(QLabel):
     filename = ''
     orig_pos = {'x':0,'y':0}
     move_orig_pos = {'x':0,'y':0}
+    svg = ET.ElementTree
+    c = {}
 
     def __init__(self, parent, pixmap = None):
         super().__init__(parent)
         self._parent = parent
         self.filename = pixmap
+        if pixmap: self.svg = ET.parse(pixmap)
+        if self.filename: self.separateCB()
         pixmap = QPixmap(pixmap)
         self.setPixmap(pixmap)
         self.resize(pixmap.width(),pixmap.height())
@@ -23,10 +30,61 @@ class Background(QLabel):
     
     def origPos(self):
         self.orig_pos = {
-            'x':int((self._parent.frameGeometry().width()/2-self.frameGeometry().width()/2)),
+            'x':int(self._parent.frameGeometry().width()/2-self.frameGeometry().width()/2),
             'y':int(self._parent.frameGeometry().height()/2-self.frameGeometry().height()/2)
             }
         self.move(self.orig_pos['x'],self.orig_pos['y'])
+
+    def convert(self):
+        svg = self.svg.getroot()
+        string = ET.tostring(svg)
+        return QPixmap.loadFromData(string)
+
+    # Seperate checkboxes from background if there is any. Most likely needs optimization
+    def separateCB(self):
+        svg = self.svg.getroot()
+        svgTxt = ET.tostring(svg).decode()
+        svgTxt = svgTxt.replace('ns0:', '')
+        svgTxt = svgTxt.replace('<g/>', '')
+        svg = ET.ElementTree(ET.fromstring(svgTxt))
+        svg = self.svg.getroot()
+        checkboxes = re.findall(r'(checkbox_\w+)',svgTxt)
+        self.c = {}
+        child = ET.ElementTree
+        for idx, checkbox in enumerate(checkboxes):
+            child = svg.find(f'''.//*[@id='{checkbox}']...''')
+            coords = re.findall(r'[0-9]+,\s[0-9]+', child.get('transform'))[0].split(',')
+            txt = child.find('''.//*[@id='text']''').text
+            svgchild = svg.find(f'''.//*[@id='{checkbox}']''')
+            svgStr = ET.tostring(svg).decode()
+            childStr = ET.tostring(child).decode()
+            childStr = childStr.replace('ns0:', '')
+            childStr = childStr.replace('xmlns:ns0="http://www.w3.org/2000/svg" ', '')
+            svgStr = svgStr.replace('ns0:', '')
+            svgStr = svgStr.replace(childStr, '')
+            svg = ET.ElementTree(ET.fromstring(svgStr))
+            svg = svg.getroot()
+            self.c[checkbox] = svgchild, coords, txt
+        svgFigure = transform.fromstring(ET.tostring(svg).decode())
+        svgFigure.save('temp/bg.svg','utf-8')
+        pixmap = QPixmap('temp/bg.svg')
+        self.setPixmap(pixmap)
+        self.svg = ET.ElementTree(svg)
+        os.remove("temp/bg.svg")
+    
+    # Adds seperated checkboxes
+    def addChilds(self):
+        for c in self.c:
+            oc.add(canvas.PresetImg(oc.bg,oc.preset,self.c[c][1],self.c[c][2]))
+        self.updateBG()
+
+    def updateBG(self):
+        svg = self.svg.getroot()
+        svg = transform.fromstring(ET.tostring(svg).decode())
+        svg.save('temp/bg.svg','utf-8')
+        pixmap = QPixmap('temp/bg.svg')
+        self.setPixmap(pixmap)
+        os.remove("temp/bg.svg")
 
 class PresetImg(QLabel):
     selected = False
@@ -40,7 +98,7 @@ class PresetImg(QLabel):
     textAreaHeight = '45'
     timer = QTimer()
 
-    def __init__(self, parent, pixmap = None):
+    def __init__(self, parent, pixmap = None, coords = None, txt = None):
         super().__init__(parent)
         self.setStyleSheet('border: none;')
         self.filename = pixmap
@@ -49,11 +107,24 @@ class PresetImg(QLabel):
         pixmap = QPixmap(pixmap)
         self.setPixmap(pixmap)
         self.resize(pixmap.width(),pixmap.height())
-        self.orig_pos = {
-            'x':int((parent.frameGeometry().width()/2-self.frameGeometry().width()/2)),
-            'y':int(parent.frameGeometry().height()/2-self.frameGeometry().width()/2)
-            }
+        if not coords:
+            self.orig_pos = {
+                'x':int(parent.frameGeometry().width()/2-self.frameGeometry().width()/2),
+                'y':int(parent.frameGeometry().height()/2-self.frameGeometry().width()/2)
+                }
+        else:
+            self.orig_pos = {
+                'x':int(coords[0]),
+                'y':int(coords[1])
+                }
         self.move(self.orig_pos['x'],self.orig_pos['y'])
+        if txt:
+            self.updateText(txt)
+
+    def delete(self):
+        oc.delete(self)
+        self.setParent(None)
+        self.deleteLater()
 
     def timerStopped(self):
         self.timer.stop()
@@ -75,6 +146,10 @@ class PresetImg(QLabel):
             self.textEdit.setParent(None)
             self.textEdit.deleteLater()
             delattr(self,'textEdit')
+        if hasattr(self,'rcMenu'):
+            self.rcMenu.setParent(None)
+            self.rcMenu.deleteLater()
+            delattr(self,'rcMenu')
         
     def textEditor(self):
         self.textSelected = True
@@ -146,6 +221,16 @@ class PresetImg(QLabel):
             self.setPixmap(pixmap)
             os.remove("temp/editedCheckbox.svg")
             self.deselect()
+            
+    def updateText(self, newText):
+        self.svg.getroot()[0][2][1].text = newText
+
+        if not os.path.isdir('temp'): os.mkdir('temp')
+        self.svg.write('temp/editedCheckbox.svg', 'utf-8')
+        pixmap = QPixmap('temp/editedCheckbox.svg')
+        self.setPixmap(pixmap)
+        os.remove("temp/editedCheckbox.svg")
+        self.deselect()
 
     def textwidth(self, text, fontsize=7.8):
         surface = cairo.SVGSurface('undefined.svg', 1280, 200)
@@ -166,17 +251,24 @@ class PresetImg(QLabel):
         self.firstrelease = False
     
     def mousePressEvent(self, event: QMouseEvent):
-        self.select()
-        self.click_pos['x'] = event.localPos().x()
-        self.click_pos['y'] = event.localPos().y()
-        
-        self.checkDoubleClick()
-        self.timer.timeout.connect(self.timerStopped)
-        self.timer.start(250)
+        if event.button() == 1:
+            self.select()
+            self.click_pos['x'] = event.localPos().x()
+            self.click_pos['y'] = event.localPos().y()
+            
+            self.checkDoubleClick()
+            self.timer.timeout.connect(self.timerStopped)
+            self.timer.start(250)
+        elif event.button() == 2:
+            self.deselect()
+            self.rcMenu = QPushButton('&Delete',self)
+            self.rcMenu.move(event.pos().x(),event.pos().y())
+            self.rcMenu.resize(50,20)
+            self.rcMenu.setStyleSheet('background-color: white; border: 1px solid gray;')
+            self.rcMenu.clicked.connect(lambda:self.delete())
+            self.rcMenu.show()
+            pass
 
     def mouseMoveEvent(self, event: QMouseEvent):
         pos = event.windowPos()
         self.move(pos.x()-self.parentEle.pos().x()-50-self.click_pos['x'],pos.y()-self.parentEle.pos().y()-self.click_pos['y'])
-
-    def mouseReleaseEvent(self, event: QMouseEvent):
-        pass

@@ -1,7 +1,7 @@
 import configparser
-from PyQt5.QtCore import QRect, pyqtSignal
-from PyQt5.QtGui import QMoveEvent
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QFrame, QGraphicsOpacityEffect, QLabel, QLineEdit, QListWidget, QPushButton, QMainWindow, QAction, QFileDialog
+from firebase_admin.db import Event
 from scripts import (
     canvas, 
     save, 
@@ -56,7 +56,7 @@ class window(QMainWindow):
    def initBtns(self):
       #Btn holder
       self.layout = QFrame(self)
-      self.layout.setGeometry(QRect(0, 20, 50, self.frameGeometry().height()))
+      self.layout.setGeometry(0, 20, 50, self.frameGeometry().height())
 
       #Add new preset img
       self.add_btn = QPushButton('Add',self.layout)
@@ -116,14 +116,19 @@ class window(QMainWindow):
       if self.bgName.text() != '':
          if self.listwidget.currentItem():
             selectedProject = self.projects[self.listwidget.currentItem().text()]
-            oc.updateID(selectedProject)
+            loadedKey = ''
+            for key in self.maps:
+               if self.listwidget.currentItem().text() == self.maps[key]['MAP']['name']:
+                  loadedKey = key
+            oc.updateID(loadedKey)
          
+         # Add preset location
+         oc.addPreset(self.cbName.text())
          # Load background
          self.bg = canvas.Background(self.canvas,self.bgName.text())
          oc.addBG(self.bg)
          self.bg.show()
-         # Add preset location
-         oc.addPreset(self.cbName.text())
+         self.bg.addChilds()
          
          self.settings['save']['url'] = selectedProject['URL']
          self.settings['save']['name'] = selectedProject['MAP']['name']
@@ -270,7 +275,7 @@ class window(QMainWindow):
       if filename:
          return filename
 
-   def resizeEvent(self, event):
+   def resizeEvent(self, event) -> Event:
       self.resized.emit()
       return super(window, self).resizeEvent(event)
 
@@ -287,6 +292,6 @@ class window(QMainWindow):
       if oc.bg.filename != None:
          save.save()
 
-   def mousePressEvent(self, event: QMoveEvent):
+   def mousePressEvent(self, event):
       # Deselect selected checkbox elements
       oc.deselectAll()
