@@ -1,6 +1,7 @@
 import os
 import configparser
 import json
+import firebase_admin
 from svgutils import transform
 import xml.etree.ElementTree as ET
 from . import objectController as oc
@@ -59,7 +60,10 @@ def save():
     # Create file & map
     saveInit()
     # Push json map to Firebase
-    fbSave()
+    if firebase_admin._apps:
+        fbSave()
+    else:
+        print('Firebase not initialized saving locally only')
 
 def saveAs():
     pass

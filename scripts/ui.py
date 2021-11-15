@@ -222,7 +222,7 @@ class window(QMainWindow):
       frontCenterW = self.front.frameGeometry().width()/2
 
       self.mapJsonLabel = QLabel(self.front)
-      self.mapJsonLabel.setText('Map json')
+      self.mapJsonLabel.setText('Firebase Map json')
       self.mapJsonLabel.move(frontCenterW-self.mapJsonLabel.frameGeometry().width()/2-35,20)
       self.listwidget = QListWidget(self.front)
       self.listwidget.resize(200,150)
@@ -230,9 +230,10 @@ class window(QMainWindow):
 
       self.maps = fb.fbGetMaps()
       self.projects = {}
-      for idx, map in enumerate(self.maps):
-         self.projects[self.maps[map]['MAP']['name']] = self.maps[map]
-         self.listwidget.insertItem(idx, self.maps[map]['MAP']['name'])
+      if self.maps:
+         for idx, map in enumerate(self.maps):
+            self.projects[self.maps[map]['MAP']['name']] = self.maps[map]
+            self.listwidget.insertItem(idx, self.maps[map]['MAP']['name'])
 
       self.bgNameLabel = QLabel(self.front)
       self.bgNameLabel.setText('SVG image')

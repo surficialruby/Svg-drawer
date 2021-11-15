@@ -11,8 +11,11 @@ def main():
    config = configparser.ConfigParser()
    config.read('config\settings.ini')
    # Init Firebase connection
-   cred = credentials.Certificate(config['fb']['CertificateURL'])
-   firebase_admin.initialize_app(cred, {'databaseURL': config['fb']['databaseURL']})
+   try:
+      cred = credentials.Certificate(config['fb']['CertificateURL'])
+      firebase_admin.initialize_app(cred, {'databaseURL': config['fb']['databaseURL']})
+   except:
+      print("Can't find Firebase credentials or databaseURL")
    
    # Init PyQt app
    app = QApplication(sys.argv)
