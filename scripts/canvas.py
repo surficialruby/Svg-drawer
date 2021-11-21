@@ -262,7 +262,7 @@ class PresetImg(QLabel):
         elif event.button() == 2:
             self.deselect()
             self.rcMenu = QPushButton('&Delete',self)
-            self.rcMenu.move(event.pos().x(),event.pos().y())
+            self.rcMenu.move(round(event.pos().x()),round(event.pos().y()))
             self.rcMenu.resize(50,20)
             self.rcMenu.setStyleSheet('background-color: white; border: 1px solid gray;')
             self.rcMenu.clicked.connect(lambda:self.delete())
