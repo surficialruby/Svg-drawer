@@ -1,4 +1,6 @@
 import configparser
+import json
+import firebase_admin
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QFrame, QGraphicsOpacityEffect, QLabel, QLineEdit, QListWidget, QPushButton, QMainWindow, QAction, QFileDialog
 from firebase_admin.db import Event
@@ -121,7 +123,10 @@ class window(QMainWindow):
                if self.listwidget.currentItem().text() == self.maps[key]['MAP']['name']:
                   loadedKey = key
             oc.updateID(loadedKey)
-         
+         elif self.localJSON:
+            with open(self.localJSON.text()) as json_file:
+               selectedProject = json.load(json_file)
+
          # Add preset location
          oc.addPreset(self.cbName.text())
          # Load background
@@ -151,54 +156,54 @@ class window(QMainWindow):
 
       self.front = QFrame(self.modalNPM)
       self.front.resize(300,480)
-      self.front.move(int(self.settings['display']['width'])/2-self.front.frameGeometry().width()/2,int(self.settings['display']['height'])/2-self.front.frameGeometry().height()/2)
+      self.front.move(round(int(self.settings['display']['width'])/2-self.front.frameGeometry().width()/2),round(int(self.settings['display']['height'])/2-self.front.frameGeometry().height()/2))
       self.front.setStyleSheet('background-color:white;') 
 
       frontCenterW = self.front.frameGeometry().width()/2
 
       self.projectNameLabel = QLabel(self.front)
       self.projectNameLabel.setText('Project name')
-      self.projectNameLabel.move(frontCenterW-self.projectNameLabel.frameGeometry().width()/2-35,30)
+      self.projectNameLabel.move(round(frontCenterW-self.projectNameLabel.frameGeometry().width()/2)-35,30)
       self.projectName = QLineEdit(self.front)
-      self.projectName.move(frontCenterW-self.projectName.frameGeometry().width()/2-35,50)
+      self.projectName.move(round(frontCenterW-self.projectName.frameGeometry().width()/2)-35,50)
 
       self.bgNameLabel = QLabel(self.front)
       self.bgNameLabel.setText('Background')
-      self.bgNameLabel.move(frontCenterW-self.bgNameLabel.frameGeometry().width()/2-35,80)
+      self.bgNameLabel.move(round(frontCenterW-self.bgNameLabel.frameGeometry().width()/2)-35,80)
       self.bgName = QLineEdit(self.front)
       self.bgName.setReadOnly(True)
-      self.bgName.move(frontCenterW-self.bgName.frameGeometry().width()/2-35,100)
+      self.bgName.move(round(frontCenterW-self.bgName.frameGeometry().width()/2)-35,100)
       self.bgSelect = QPushButton('browse',self.front)
       self.bgSelect.resize(50,20)
-      self.bgSelect.move(frontCenterW-self.bgSelect.frameGeometry().width()/2+75,100)
+      self.bgSelect.move(round(frontCenterW-self.bgSelect.frameGeometry().width()/2)+75,100)
       self.bgSelect.clicked.connect(lambda:self.bgName.setText(self.openfilenameDialog()))
 
       self.cbNameLabel = QLabel(self.front)
       self.cbNameLabel.setText('Checkbox preset')
-      self.cbNameLabel.move(frontCenterW-self.cbNameLabel.frameGeometry().width()/2-35,130)
+      self.cbNameLabel.move(round(frontCenterW-self.cbNameLabel.frameGeometry().width()/2)-35,130)
       self.cbName = QLineEdit(self.front)
       self.cbName.setReadOnly(True)
-      self.cbName.move(frontCenterW-self.cbName.frameGeometry().width()/2-35,150)
+      self.cbName.move(round(frontCenterW-self.cbName.frameGeometry().width()/2)-35,150)
       self.cbSelect = QPushButton('browse',self.front)
       self.cbSelect.resize(50,20)
-      self.cbSelect.move(frontCenterW-self.cbSelect.frameGeometry().width()/2+75,150)
+      self.cbSelect.move(round(frontCenterW-self.cbSelect.frameGeometry().width()/2)+75,150)
       self.cbSelect.clicked.connect(lambda:self.cbName.setText(self.openfilenameDialog()))
 
       self.imgUrlLabel = QLabel(self.front)
       self.imgUrlLabel.setText('Image url')
-      self.imgUrlLabel.move(frontCenterW-self.projectNameLabel.frameGeometry().width()/2-35,180)
+      self.imgUrlLabel.move(round(frontCenterW-self.projectNameLabel.frameGeometry().width()/2)-35,180)
       self.imgURL = QLineEdit(self.front)
-      self.imgURL.move(frontCenterW-self.projectName.frameGeometry().width()/2-35,200)
+      self.imgURL.move(round(frontCenterW-self.projectName.frameGeometry().width()/2)-35,200)
 
       self.okBtn = QPushButton('Ok',self.front)
       self.okBtn.resize(50,40)
       self.okBtn.clicked.connect(lambda:self.initNewProject())
-      self.okBtn.move(frontCenterW-self.okBtn.frameGeometry().width()/2-50,self.front.frameGeometry().height()-self.okBtn.frameGeometry().height()-20)
+      self.okBtn.move(round(frontCenterW-self.okBtn.frameGeometry().width()/2)-50,round(self.front.frameGeometry().height()-self.okBtn.frameGeometry().height())-20)
 
       self.cancelBtn = QPushButton('Cancel',self.front)
       self.cancelBtn.resize(50,40)
       self.cancelBtn.clicked.connect(lambda:self.modalNPM.close())
-      self.cancelBtn.move(frontCenterW-self.cancelBtn.frameGeometry().width()/2+50,self.front.frameGeometry().height()-self.cancelBtn.frameGeometry().height()-20)
+      self.cancelBtn.move(round(frontCenterW-self.cancelBtn.frameGeometry().width()/2)+50,round(self.front.frameGeometry().height()-self.cancelBtn.frameGeometry().height())-20)
 
       self.modalNPM.show()
 
@@ -216,56 +221,68 @@ class window(QMainWindow):
 
       self.front = QFrame(self.modalLPM)
       self.front.resize(300,480)
-      self.front.move(int(self.settings['display']['width'])/2-self.front.frameGeometry().width()/2,int(self.settings['display']['height'])/2-self.front.frameGeometry().height()/2)
+      self.front.move(round(int(self.settings['display']['width'])/2-self.front.frameGeometry().width()/2),round(int(self.settings['display']['height'])/2-self.front.frameGeometry().height()/2))
       self.front.setStyleSheet('background-color:white;') 
 
       frontCenterW = self.front.frameGeometry().width()/2
 
       self.mapJsonLabel = QLabel(self.front)
       self.mapJsonLabel.setText('Firebase Map json')
-      self.mapJsonLabel.move(frontCenterW-self.mapJsonLabel.frameGeometry().width()/2-35,20)
+      self.mapJsonLabel.move(round(frontCenterW-self.mapJsonLabel.frameGeometry().width()/2)-35,20)
       self.listwidget = QListWidget(self.front)
       self.listwidget.resize(200,150)
-      self.listwidget.move(frontCenterW-self.listwidget.frameGeometry().width()/2+10,40)
+      self.listwidget.move(round(frontCenterW-self.listwidget.frameGeometry().width()/2)+10,40)
 
-      self.maps = fb.fbGetMaps()
-      self.projects = {}
-      if self.maps:
-         for idx, map in enumerate(self.maps):
-            self.projects[self.maps[map]['MAP']['name']] = self.maps[map]
-            self.listwidget.insertItem(idx, self.maps[map]['MAP']['name'])
+      if firebase_admin._apps:
+         self.maps = fb.fbGetMaps()
+         self.projects = {}
+         if self.maps:
+            for idx, map in enumerate(self.maps):
+               self.projects[self.maps[map]['MAP']['name']] = self.maps[map]
+               self.listwidget.insertItem(idx, self.maps[map]['MAP']['name'])
+
+      self.jsonNameLabel = QLabel(self.front)
+      self.jsonNameLabel.setText('Local map json')
+      self.jsonNameLabel.move(round(frontCenterW-self.jsonNameLabel.frameGeometry().width()/2)-35,200)
+      self.localJSON = QLineEdit(self.front)
+      self.localJSON.setReadOnly(True)
+      self.localJSON.move(round(frontCenterW-self.localJSON.frameGeometry().width()/2)-35,220)
+      self.jsonSelect = QPushButton('browse',self.front)
+      self.jsonSelect.resize(50,20)
+      self.jsonSelect.move(round(frontCenterW-self.jsonSelect.frameGeometry().width()/2)+75,220)
+      self.jsonSelect.clicked.connect(lambda:self.localJSON.setText(self.openJSONDialog()))
 
       self.bgNameLabel = QLabel(self.front)
       self.bgNameLabel.setText('SVG image')
-      self.bgNameLabel.move(frontCenterW-self.bgNameLabel.frameGeometry().width()/2-35,200)
+      self.bgNameLabel.move(round(frontCenterW-self.bgNameLabel.frameGeometry().width()/2)-35,200)
       self.bgName = QLineEdit(self.front)
       self.bgName.setReadOnly(True)
-      self.bgName.move(frontCenterW-self.bgName.frameGeometry().width()/2-35,220)
+      self.bgName.move(round(frontCenterW-self.bgName.frameGeometry().width()/2)-35,220)
       self.bgSelect = QPushButton('browse',self.front)
       self.bgSelect.resize(50,20)
-      self.bgSelect.move(frontCenterW-self.bgSelect.frameGeometry().width()/2+75,220)
+      self.bgSelect.move(round(frontCenterW-self.bgSelect.frameGeometry().width()/2)+75,220)
       self.bgSelect.clicked.connect(lambda:self.bgName.setText(self.openfilenameDialog()))
 
       self.cbNameLabel = QLabel(self.front)
       self.cbNameLabel.setText('Checkbox preset')
-      self.cbNameLabel.move(frontCenterW-self.cbNameLabel.frameGeometry().width()/2-35,250)
+      self.cbNameLabel.move(round(frontCenterW-self.cbNameLabel.frameGeometry().width()/2)-35,250)
       self.cbName = QLineEdit(self.front)
       self.cbName.setReadOnly(True)
-      self.cbName.move(frontCenterW-self.cbName.frameGeometry().width()/2-35,270)
+      self.cbName.move(round(frontCenterW-self.cbName.frameGeometry().width()/2)-35,270)
       self.cbSelect = QPushButton('browse',self.front)
       self.cbSelect.resize(50,20)
-      self.cbSelect.move(frontCenterW-self.cbSelect.frameGeometry().width()/2+75,270)
+      self.cbSelect.move(round(frontCenterW-self.cbSelect.frameGeometry().width()/2)+75,270)
       self.cbSelect.clicked.connect(lambda:self.cbName.setText(self.openfilenameDialog()))
 
       self.okBtn = QPushButton('Ok',self.front)
       self.okBtn.resize(50,40)
       self.okBtn.clicked.connect(lambda:self.initLoadedProject())
-      self.okBtn.move(frontCenterW-self.okBtn.frameGeometry().width()/2-50,self.front.frameGeometry().height()-self.okBtn.frameGeometry().height()-20)
+      self.okBtn.move(round(frontCenterW-self.okBtn.frameGeometry().width()/2)-50,round(self.front.frameGeometry().height()-self.okBtn.frameGeometry().height())-20)
 
       self.cancelBtn = QPushButton('Cancel',self.front)
       self.cancelBtn.resize(50,40)
       self.cancelBtn.clicked.connect(lambda:self.modalLPM.close())
-      self.cancelBtn.move(frontCenterW-self.cancelBtn.frameGeometry().width()/2+50,self.front.frameGeometry().height()-self.cancelBtn.frameGeometry().height()-20)
+      self.cancelBtn.move(round(frontCenterW-self.cancelBtn.frameGeometry().width()/2)+50,round(self.front.frameGeometry().height()-self.cancelBtn.frameGeometry().height())-20)
 
       self.modalLPM.show()
 
@@ -273,6 +290,13 @@ class window(QMainWindow):
       options = QFileDialog.Options()
       options |= QFileDialog.DontUseNativeDialog
       filename, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","SVG Files (*.svg);;All Files (*)", options=options)
+      if filename:
+         return filename
+      
+   def openJSONDialog(self):
+      options = QFileDialog.Options()
+      options |= QFileDialog.DontUseNativeDialog
+      filename, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","JSON Files (*.json);;All Files (*)", options=options)
       if filename:
          return filename
 

@@ -1,7 +1,9 @@
 #!/usr/bin/env python
+import os
 import sys
 import scripts.ui as Ui
 import configparser
+from pathlib import Path
 from PyQt5.QtWidgets import QApplication
 import firebase_admin
 from firebase_admin import credentials
@@ -10,6 +12,10 @@ def main():
    # Load program settings
    config = configparser.ConfigParser()
    config.read('config\settings.ini')
+   
+   Path(os.getcwd()+"/temp").mkdir(parents=True, exist_ok=True)
+   Path(os.getcwd()+"/out").mkdir(parents=True, exist_ok=True)
+
    # Init Firebase connection
    try:
       cred = credentials.Certificate(config['fb']['CertificateURL'])
