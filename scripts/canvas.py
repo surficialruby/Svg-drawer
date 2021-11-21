@@ -271,4 +271,4 @@ class PresetImg(QLabel):
 
     def mouseMoveEvent(self, event: QMouseEvent):
         pos = event.windowPos()
-        self.move(pos.x()-self.parentEle.pos().x()-50-self.click_pos['x'],pos.y()-self.parentEle.pos().y()-self.click_pos['y'])
+        self.move(round(pos.x()-self.parentEle.pos().x()-50-self.click_pos['x']),round(pos.y()-self.parentEle.pos().y()-self.click_pos['y']))
