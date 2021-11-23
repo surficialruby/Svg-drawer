@@ -214,18 +214,17 @@ class PresetImg(QLabel):
             if float(height) < float(self.svg.getroot()[0][2][0].get('height')):
                 height = self.textAreaHeight
             self.svg.getroot()[0][2][0].set('height',height)
-
-            if not os.path.isdir('temp'): os.mkdir('temp')
+            
             self.svg.write('temp/editedCheckbox.svg', 'utf-8')
             pixmap = QPixmap('temp/editedCheckbox.svg')
             self.setPixmap(pixmap)
             os.remove("temp/editedCheckbox.svg")
+            os.remove("temp/undefined.svg")
             self.deselect()
             
     def updateText(self, newText):
         self.svg.getroot()[0][2][1].text = newText
 
-        if not os.path.isdir('temp'): os.mkdir('temp')
         self.svg.write('temp/editedCheckbox.svg', 'utf-8')
         pixmap = QPixmap('temp/editedCheckbox.svg')
         self.setPixmap(pixmap)
@@ -233,7 +232,7 @@ class PresetImg(QLabel):
         self.deselect()
 
     def textwidth(self, text, fontsize=7.8):
-        surface = cairo.SVGSurface('undefined.svg', 1280, 200)
+        surface = cairo.SVGSurface('temp/undefined.svg', 1280, 200)
         cr = cairo.Context(surface)
         cr.select_font_face('Arial', cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
         cr.set_font_size(fontsize)
