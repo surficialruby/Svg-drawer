@@ -153,10 +153,10 @@ class PresetImg(QLabel):
         
     def textEditor(self):
         self.textSelected = True
-        x = round(float(self.svg.getroot()[0][2][0].get('x')))
+        x = round(float(self.svg.getroot().find('''.//*[@id='textarea']''').get('x')))
         y = 5
-        width = round(float(self.svg.getroot()[0][2][0].get('width')))
-        height = round(float(self.svg.getroot()[0][2][0].get('height')))
+        width = round(float(self.svg.getroot().find('''.//*[@id='textarea']''').get('width')))
+        height = round(float(self.svg.getroot().find('''.//*[@id='textarea']''').get('height')))
         if not hasattr(self,'textEdit'):
             self.textEdit = QTextEdit(self)
             self.textEdit.move(x,y)
@@ -169,10 +169,10 @@ class PresetImg(QLabel):
     def saveText(self):
         if hasattr(self, 'textEdit'):
             fontSize = 7.8
-            self.svg.getroot()[0][2][1].text = self.textEdit.toPlainText()
+            self.svg.getroot().find('''.//*[@id='text']''').text = self.textEdit.toPlainText()
             plainText = self.textEdit.toPlainText().splitlines()
             svgTextArr = []
-            width = float(self.svg.getroot()[0][2][0].get('width'))
+            width = float(self.svg.getroot().find('''.//*[@id='textarea']''').get('width'))
             for idx, line in enumerate(plainText):
                 if self.textwidth(line, fontSize) > width:
                     words = line.split(' ')
@@ -211,9 +211,9 @@ class PresetImg(QLabel):
             self.svg.getroot()[0][2][1].text = newText
             self.svg.getroot().set('xml:space','preserve')
             height = str((fontSize+2.3)*len(svgTextArr)+5)
-            if float(height) < float(self.svg.getroot()[0][2][0].get('height')):
+            if float(height) < float(self.svg.getroot().find('''.//*[@id='textarea']''').get('height')):
                 height = self.textAreaHeight
-            self.svg.getroot()[0][2][0].set('height',height)
+            self.svg.getroot().find('''.//*[@id='textarea']''').set('height',height)
             
             self.svg.write('temp/editedCheckbox.svg', 'utf-8')
             pixmap = QPixmap('temp/editedCheckbox.svg')
@@ -223,7 +223,7 @@ class PresetImg(QLabel):
             self.deselect()
             
     def updateText(self, newText):
-        self.svg.getroot()[0][2][1].text = newText
+        self.svg.getroot().find('''.//*[@id='text']''').text = newText
 
         self.svg.write('temp/editedCheckbox.svg', 'utf-8')
         pixmap = QPixmap('temp/editedCheckbox.svg')

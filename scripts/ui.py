@@ -1,8 +1,9 @@
+import os
 import configparser
 import json
 import firebase_admin
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QFrame, QGraphicsOpacityEffect, QLabel, QLineEdit, QListWidget, QPushButton, QMainWindow, QAction, QFileDialog
+from PyQt5.QtWidgets import QFrame, QGraphicsOpacityEffect, QLabel, QLineEdit, QListWidget, QPushButton, QMainWindow, QAction, QFileDialog, QMessageBox
 from firebase_admin.db import Event
 from scripts import (
     canvas, 
@@ -113,24 +114,47 @@ class window(QMainWindow):
             self.settings.write(configfile)
 
          self.modalNPM.close()
+      else:
+         print("Field not filled")
+         msg = QMessageBox()
+         msg.setIcon(QMessageBox.Information)
+         msg.setText("Field not filled")
+         msg.setWindowTitle("Information MessageBox")
+         msg.setStandardButtons(QMessageBox.Ok)
+         msg.exec_()
 
    def initLoadedProject(self):
-      if self.bgName.text() != '':
-         if self.listwidget.currentItem():
-            selectedProject = self.projects[self.listwidget.currentItem().text()]
-            loadedKey = ''
-            for key in self.maps:
-               if self.listwidget.currentItem().text() == self.maps[key]['MAP']['name']:
-                  loadedKey = key
-            oc.updateID(loadedKey)
-         elif self.localJSON:
-            with open(self.localJSON.text()) as json_file:
-               selectedProject = json.load(json_file)
-
+      bg = ''
+      message = ''
+      selectedProject = None
+      if self.listwidget.currentItem():
+         selectedProject = self.projects[self.listwidget.currentItem().text()]
+         loadedKey = ''
+         for key in self.maps:
+            if self.listwidget.currentItem().text() == self.maps[key]['MAP']['name']:
+               loadedKey = key
+               print(self.maps[key]['URL'])
+               bg = self.maps[key]['URL']
+         oc.updateID(loadedKey)
+      elif self.localJSON.text() != '':
+         with open(self.localJSON.text()) as json_file:
+            selectedProject = json.load(json_file)
+         
+      if not os.path.isfile(bg):
+         print("Path: " + bg)
+         print("Image not found with saved url")
+         message += "Image not found with saved url try to select SVG image manually.\n"
+         bg = ''
+         
+      if self.bgName.text() != '' or self.cbName.text() != '' or bg != '' and selectedProject != None:
+         if self.bgName.text() != '': 
+            bg = self.bgName.text()
+         else:
+            message += 'No manually selected SVG image.\n'
          # Add preset location
          oc.addPreset(self.cbName.text())
          # Load background
-         self.bg = canvas.Background(self.canvas,self.bgName.text())
+         self.bg = canvas.Background(self.canvas,bg)
          oc.addBG(self.bg)
          self.bg.show()
          self.bg.addChilds()
@@ -141,6 +165,19 @@ class window(QMainWindow):
             self.settings.write(configfile)
 
          self.modalLPM.close()
+      else:
+         if selectedProject == None:
+            message += "No JSON file selected from Firebase list or local.\n"
+         if self.bgName.text() == '':
+            message += "Checkbox preset not selected.\n"
+         if self.bgName.text() == '':
+            message += "SVG image not selected.\n"
+         msg = QMessageBox()
+         msg.setIcon(QMessageBox.Information)
+         msg.setText(message)
+         msg.setWindowTitle("Information MessageBox")
+         msg.setStandardButtons(QMessageBox.Ok)
+         msg.exec_()
 
    def showNPM(self):
       self.modalNPM = QFrame(self)
