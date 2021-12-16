@@ -141,12 +141,12 @@ class window(QMainWindow):
             selectedProject = json.load(json_file)
          
       if not os.path.isfile(bg):
-         print("Path: " + bg)
          print("Image not found with saved url")
          message += "Image not found with saved url try to select SVG image manually.\n"
          bg = ''
          
-      if self.bgName.text() != '' or self.cbName.text() != '' or bg != '' and selectedProject != None:
+      if (self.bgName.text() != '' or bg != '') and selectedProject != None and self.cbName.text() != '':
+         print('hi')
          if self.bgName.text() != '': 
             bg = self.bgName.text()
          else:
@@ -168,7 +168,7 @@ class window(QMainWindow):
       else:
          if selectedProject == None:
             message += "No JSON file selected from Firebase list or local.\n"
-         if self.bgName.text() == '':
+         if self.cbName.text() == '':
             message += "Checkbox preset not selected.\n"
          if self.bgName.text() == '':
             message += "SVG image not selected.\n"
