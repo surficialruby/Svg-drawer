@@ -1,8 +1,8 @@
 background.svg requires:
-    xml:space="preserve" attribute
+    xml:space="preserve"
 
 preset_checkbox.svg requires:
     id="checkbox"
-    g id="textarea"
-        rect x="" width="" height=""
+    g
+        id="textarea" rect x="" width="" height=""
         text id="text"

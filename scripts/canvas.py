@@ -153,10 +153,10 @@ class PresetImg(QLabel):
         
     def textEditor(self):
         self.textSelected = True
-        x = round(float(self.svg.getroot()[0][2][0].get('x')))
+        x = round(float(self.svg.getroot().find('''.//*[@id='textarea']''').get('x')))
         y = 5
-        width = round(float(self.svg.getroot()[0][2][0].get('width')))
-        height = round(float(self.svg.getroot()[0][2][0].get('height')))
+        width = round(float(self.svg.getroot().find('''.//*[@id='textarea']''').get('width')))
+        height = round(float(self.svg.getroot().find('''.//*[@id='textarea']''').get('height')))
         if not hasattr(self,'textEdit'):
             self.textEdit = QTextEdit(self)
             self.textEdit.move(x,y)
@@ -169,10 +169,10 @@ class PresetImg(QLabel):
     def saveText(self):
         if hasattr(self, 'textEdit'):
             fontSize = 7.8
-            self.svg.getroot()[0][2][1].text = self.textEdit.toPlainText()
+            self.svg.getroot().find('''.//*[@id='text']''').text = self.textEdit.toPlainText()
             plainText = self.textEdit.toPlainText().splitlines()
             svgTextArr = []
-            width = float(self.svg.getroot()[0][2][0].get('width'))
+            width = float(self.svg.getroot().find('''.//*[@id='textarea']''').get('width'))
             for idx, line in enumerate(plainText):
                 if self.textwidth(line, fontSize) > width:
                     words = line.split(' ')
@@ -208,24 +208,23 @@ class PresetImg(QLabel):
             newText = ''
             for line_ in svgTextArr:
                 newText += line_ + '\n'
-            self.svg.getroot()[0][2][1].text = newText
+            self.svg.getroot().find('''.//*[@id='text']''').text = newText
             self.svg.getroot().set('xml:space','preserve')
             height = str((fontSize+2.3)*len(svgTextArr)+5)
-            if float(height) < float(self.svg.getroot()[0][2][0].get('height')):
+            if float(height) < float(self.svg.getroot().find('''.//*[@id='textarea']''').get('height')):
                 height = self.textAreaHeight
-            self.svg.getroot()[0][2][0].set('height',height)
-
-            if not os.path.isdir('temp'): os.mkdir('temp')
+            self.svg.getroot().find('''.//*[@id='textarea']''').set('height',height)
+            
             self.svg.write('temp/editedCheckbox.svg', 'utf-8')
             pixmap = QPixmap('temp/editedCheckbox.svg')
             self.setPixmap(pixmap)
             os.remove("temp/editedCheckbox.svg")
+            os.remove("temp/undefined.svg")
             self.deselect()
             
     def updateText(self, newText):
-        self.svg.getroot()[0][2][1].text = newText
+        self.svg.getroot().find('''.//*[@id='text']''').text = newText
 
-        if not os.path.isdir('temp'): os.mkdir('temp')
         self.svg.write('temp/editedCheckbox.svg', 'utf-8')
         pixmap = QPixmap('temp/editedCheckbox.svg')
         self.setPixmap(pixmap)
@@ -233,7 +232,7 @@ class PresetImg(QLabel):
         self.deselect()
 
     def textwidth(self, text, fontsize=7.8):
-        surface = cairo.SVGSurface('undefined.svg', 1280, 200)
+        surface = cairo.SVGSurface('temp/undefined.svg', 1280, 200)
         cr = cairo.Context(surface)
         cr.select_font_face('Arial', cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
         cr.set_font_size(fontsize)
@@ -262,7 +261,7 @@ class PresetImg(QLabel):
         elif event.button() == 2:
             self.deselect()
             self.rcMenu = QPushButton('&Delete',self)
-            self.rcMenu.move(event.pos().x(),event.pos().y())
+            self.rcMenu.move(round(event.pos().x()),round(event.pos().y()))
             self.rcMenu.resize(50,20)
             self.rcMenu.setStyleSheet('background-color: white; border: 1px solid gray;')
             self.rcMenu.clicked.connect(lambda:self.delete())
@@ -271,4 +270,4 @@ class PresetImg(QLabel):
 
     def mouseMoveEvent(self, event: QMouseEvent):
         pos = event.windowPos()
-        self.move(pos.x()-self.parentEle.pos().x()-50-self.click_pos['x'],pos.y()-self.parentEle.pos().y()-self.click_pos['y'])
+        self.move(round(pos.x()-self.parentEle.pos().x()-50-self.click_pos['x']),round(pos.y()-self.parentEle.pos().y()-self.click_pos['y']))
