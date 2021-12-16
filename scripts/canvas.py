@@ -208,7 +208,7 @@ class PresetImg(QLabel):
             newText = ''
             for line_ in svgTextArr:
                 newText += line_ + '\n'
-            self.svg.getroot()[0][2][1].text = newText
+            self.svg.getroot().find('''.//*[@id='text']''').text = newText
             self.svg.getroot().set('xml:space','preserve')
             height = str((fontSize+2.3)*len(svgTextArr)+5)
             if float(height) < float(self.svg.getroot().find('''.//*[@id='textarea']''').get('height')):
