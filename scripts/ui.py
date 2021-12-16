@@ -139,7 +139,7 @@ class window(QMainWindow):
       elif self.localJSON.text() != '':
          with open(self.localJSON.text()) as json_file:
             selectedProject = json.load(json_file)
-         
+      bg = bg.replace('\\', '/').replace('"','')
       if not os.path.isfile(bg):
          print("Image not found with saved url")
          message += "Image not found with saved url try to select SVG image manually.\n"
